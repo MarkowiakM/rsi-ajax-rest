@@ -8,7 +8,7 @@ import org.springframework.http.MediaType;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:8080", maxAge = 3600)
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/people")
 @AllArgsConstructor
