@@ -314,6 +314,13 @@ $(document).ready(function () {
     );
   }
 
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
   $("#format-json").click(function () {
     FORMAT = FORMATS.JSON;
     document.getElementById("format").innerHTML = "Format: JSON";
@@ -326,10 +333,12 @@ $(document).ready(function () {
 
   $("#get-all").click(function () {
     clear();
+    scrollToTop();
     getPeople();
   });
 
   $("#count-people").click(function () {
+    scrollToTop();
     countPeople();
   });
 
@@ -337,6 +346,7 @@ $(document).ready(function () {
     e.preventDefault();
     clear();
     const id = $("#show-person").val();
+    scrollToTop();
     if (id) {
       getPerson(id);
     } else {
@@ -349,6 +359,7 @@ $(document).ready(function () {
     e.preventDefault();
     clear();
     const name = $("#find-name").val();
+    scrollToTop();
     if (name) {
       getPeopleByName(name);
     } else {
@@ -361,6 +372,7 @@ $(document).ready(function () {
     e.preventDefault();
     clear();
     const id = $("#delete-id").val();
+    scrollToTop();
     if (id) {
       deletePerson(id);
     } else {
@@ -372,6 +384,7 @@ $(document).ready(function () {
   $("#add-form-submit").click(function (e) {
     e.preventDefault();
     clear();
+    scrollToTop();
 
     const name = $("#add-name").val();
     const age = $("#add-age").val();
@@ -393,6 +406,8 @@ $(document).ready(function () {
   $("#update-form-submit").click(function (e) {
     e.preventDefault();
     clear();
+    scrollToTop();
+
     const id = $("#update-id").val();
     const name = $("#update-name").val();
     const age = $("#update-age").val();
