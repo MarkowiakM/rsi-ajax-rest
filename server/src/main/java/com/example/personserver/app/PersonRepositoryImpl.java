@@ -27,7 +27,13 @@ public class PersonRepositoryImpl implements PersonRepository {
 
     public List<Person> getPeopleByName(String name) {
         log.info("Getting people by name {}", name);
-        return people.stream().filter(n -> n.getName().equals(name)).toList();
+        List<Person> peopleFound =  people.stream().filter(n -> n.getName().equals(name)).toList();
+        if(peopleFound.size() > 0) {
+            return peopleFound;
+        }
+        else {
+            throw new PersonNotFoundException("Person with name " + name + " don't exist!");
+        }
     }
 
     public Person getPersonById(int id) {

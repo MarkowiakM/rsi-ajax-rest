@@ -8,7 +8,7 @@ import org.springframework.http.MediaType;
 
 import java.util.List;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/people")
 @AllArgsConstructor
@@ -43,8 +43,8 @@ public class PersonController {
         }
     }
 
-    @PostMapping(value = "/", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
-            consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+    @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
+            consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_XML_VALUE})
     public ResponseEntity<Person> addPerson(@RequestBody PersonDTO person) {
         Person newPerson = personRepository.addPerson(person);
         return ResponseEntity
@@ -53,7 +53,7 @@ public class PersonController {
     }
 
     @PutMapping(value = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
-            consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+            consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_XML_VALUE})
     public ResponseEntity<Person> updatePerson(@PathVariable int id, @RequestBody PersonDTO updatedPerson) {
         Person person = personRepository.updatePerson(id, updatedPerson);
         return ResponseEntity

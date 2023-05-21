@@ -1,10 +1,16 @@
-// var isXML = true;
-
 const ENDPOINT = "http://localhost:7070/people";
 const FORMATS = {
   JSON: "application/json",
   XML: "text/xml",
 };
+
+const TABLE_HEADERS = `
+            <tr>
+              <th>Id</th>
+              <th>Imię</th>
+              <th>Wiek</th>
+              <th>Email</th>
+            </tr>`;
 
 let FORMAT = FORMATS.JSON;
 
@@ -27,79 +33,126 @@ function myInfo() {
   console.log("OS: " + window.navigator.platform);
 }
 
-myInfo();
+// myInfo();
 
 $(document).ready(function () {
   function getPeople() {
-    console.log(endpoint);
     $.ajax({
       async: false,
       url: ENDPOINT,
       type: "GET",
-      dataType: isXML ? "xml" : "json",
-      success: function (response, status, xhr) {
-        // Handle the response from the server
-        console.log(response); // You can perform actions with the response here
-
-        // Clear the table
-        $("#personresult").empty();
-        // Append the table headers
-        $("#personresult").append(
-          "<tr><th>Id</th><th>Name</th><th>Email</th><th>Age</th></tr>"
+      dataType: FORMAT === FORMATS.XML ? "xml" : "json",
+      success: function (response, _, xhr) {
+        console.log("getting people", FORMAT, response);
+        $("#response").text(
+          "Znaleziono osoby w bazie, " +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
         );
-
-        if (isXML) {
-          // Parse XML response
-          var persons = $(response).find("Person");
-          persons.each(function () {
-            var person = $(this);
-            var id = person.find("Id").text();
-            var name = person.find("Name").text();
-            var email = person.find("Email").text();
-            var age = person.find("Age").text();
-
-            $("#personresult").append(
-              "<tr><td>" +
-                id +
-                "</td><td>" +
-                name +
-                "</td><td>" +
-                email +
-                "</td><td>" +
-                age +
-                "</td></tr>"
-            );
+        $("#response").css("color", "green");
+        let parsedPeople = [];
+        if (FORMAT === FORMATS.XML) {
+          const people = $(response).find("item");
+          people.each(function () {
+            parsedPeople.push(parseXML($(this)));
           });
         } else {
-          // Loop through the JSON response and append the data to the table
-          for (var i = 0; i < response.length; i++) {
-            var person = response[i];
-            // add id to the table
-            $("#personresult").append(
-              "<tr><td>" +
-                person.Id +
-                "</td><td>" +
-                person.Name +
-                "</td><td>" +
-                person.Email +
-                "</td><td>" +
-                person.Age +
-                "</td></tr>"
-            );
-          }
+          parsedPeople = response;
         }
+        parsedPeople.forEach((person) => {
+          appendPerson(person);
+        });
       },
-      error: function (xhr, status, error) {
-        // Handle errors
+      error: (xhr, _, error) => {
         console.log(error);
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
+        $("#response").text(
+          "Nie znaleziono osób w bazie, " +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "red");
       },
     });
   }
 
-  $("#getAll").click(function () {
-    getPeople();
-  });
+  function getPeopleByName(name) {
+    $.ajax({
+      async: false,
+      url: `${ENDPOINT}/name/${name}`,
+      type: "GET",
+      dataType: FORMAT === FORMATS.XML ? "xml" : "json",
+      success: function (response, _, xhr) {
+        console.log("getting people by name, ", FORMAT, response);
+        $("#response").text(
+          `Znaleziono osoby o imieniu: ${name}, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "green");
+        let parsedPeople = [];
+        if (FORMAT === FORMATS.XML) {
+          const people = $(response).find("item");
+          people.each(function () {
+            parsedPeople.push(parseXML($(this)));
+          });
+        } else {
+          parsedPeople = response;
+        }
+        parsedPeople.forEach((person) => {
+          appendPerson(person);
+        });
+      },
+      error: (xhr, _, error) => {
+        console.log(error);
+        $("#response").text(
+          `Nie znaleziono osób o imieniu: ${name}, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "red");
+      },
+    });
+  }
+
+  function getPerson(id) {
+    $.ajax({
+      url: `${ENDPOINT}/${id}`,
+      type: "GET",
+      dataType: FORMAT === FORMATS.XML ? "xml" : "json",
+      success: function (response, _, xhr) {
+        console.log(`Getting person with id: ${id}`, FORMAT, response);
+        $("#response").text(
+          `Znaleziono osobę o id: ${id}, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "green");
+        let parsedPerson;
+        if (FORMAT === FORMATS.XML) {
+          parsedPerson = parseXML($(response).find("Person"));
+          console.log(parsedPerson);
+        } else {
+          parsedPerson = response;
+        }
+        appendPerson(parsedPerson);
+      },
+      error: function (xhr, status, error) {
+        console.log(error);
+        $("#response").text(
+          `Nie znaleziono osoby o id: ${id}` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "red");
+      },
+    });
+  }
 
   function addPerson(person) {
     $.ajax({
@@ -107,21 +160,29 @@ $(document).ready(function () {
       url: ENDPOINT,
       type: "POST",
       data:
-        FORMAT === FORMATS.XML ? personToXml(person) : JSON.stringify(person),
+        FORMAT === FORMATS.XML ? stringifyXML(person) : JSON.stringify(person),
       contentType: FORMAT,
-      success: function (response, status, xhr) {
-        // Handle the response from the server
-        console.log(response); // You can perform actions with the response here
-        // get the response message from the server and insert it to #responde element in html
+      success: function (response, _, xhr) {
+        console.log(response);
         $("#response").css("color", "green");
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
+        $("#response").text(
+          `Dodano nową osobę, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "green");
       },
-      error: function (xhr, status, error) {
-        // Handle errors
-        console.log(personToXml(person));
+      error: function (xhr, _, error) {
         console.log(error);
         $("#response").css("color", "red");
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
+        $("#response").text(
+          "Nie udało dodać się nowej osoby, " +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "red");
       },
     });
   }
@@ -132,289 +193,221 @@ $(document).ready(function () {
       url: `${ENDPOINT}/${id}`,
       type: "PUT",
       data:
-        FORMAT === FORMATS.XML ? personToXml(person) : JSON.stringify(person),
+        FORMAT === FORMATS.XML ? stringifyXML(person) : JSON.stringify(person),
       contentType: FORMAT,
-      success: function (response, status, xhr) {
-        // Handle the response from the server
-        console.log(response); // You can perform actions with the response here
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
+      success: function (response, _, xhr) {
+        console.log(response);
+        $("#response").text(
+          `Edytowano osobę o id: ${id}, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
         $("#response").css("color", "green");
       },
-      error: function (xhr, status, error) {
-        // Handle errors
+      error: function (xhr, _, error) {
         console.log(error);
-        // make response text color red
         $("#response").css("color", "red");
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
+        $("#response").text(
+          `Nie ma w bazie osoby o id: ${id}, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
       },
     });
   }
-
-  $("#add").click(function () {
-    // when adding get the values from the input fields
-    var name = $("#name").val();
-    var email = $("#email").val();
-    var age = $("#age").val();
-
-    //create a new person json object like this :
-    var newPerson = {
-      Name: name,
-      Email: email,
-      Age: age,
-    };
-
-    //console log the new person object
-    console.log(newPerson);
-
-    //call the addPerson function and pass the new person object
-    addPerson(newPerson);
-
-    // clear the input fields
-    $("#name").val("");
-    $("#email").val("");
-    $("#age").val("");
-
-    getPersons();
-  });
-
-  $("#update").click(function () {
-    // Implement your logic here to update a person\
-    var id = $("#id").val();
-    var name = $("#name").val();
-    var email = $("#email").val();
-    var age = $("#age").val();
-
-    var updatedPerson = {
-      Id: id,
-      Name: name,
-      Email: email,
-      Age: age,
-    };
-
-    updatePerson(id, updatedPerson);
-
-    getPersons();
-  });
 
   async function deletePerson(id) {
     $.ajax({
       async: false,
       url: `${ENDPOINT}/${id}`,
       type: "DELETE",
-      success: function (response, status, xhr) {
-        // Handle the response from the server
-        console.log(response); // You can perform actions with the response here
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
+      success: function (response, _, xhr) {
+        console.log(response);
+        $("#response").text(
+          `Usunięto osobę o id: ${id}, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
         $("#response").css("color", "green");
       },
-      error: function (xhr, status, error) {
-        // Handle errors
+      error: function (xhr, _, error) {
         console.log(error);
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
+        $("#response").text(
+          `W bazie nie ma osoby o id: ${id}, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
         $("#response").css("color", "red");
       },
     });
   }
 
-  // Add an event listener to the "Delete" button
-  $("#delete").click(async function () {
-    // Implement your logic here to delete a person
-    var id = $("#id").val();
-
-    // make sure to call the getPersons function after deleting a person
-    deletePerson(id);
-    getPersons();
-  });
-
-  function getPerson(id) {
+  async function countPeople() {
     $.ajax({
-      url: `${ENDPOINT}/${id}`,
+      url: `${ENDPOINT}/size`,
       type: "GET",
       dataType: FORMAT === FORMATS.XML ? "xml" : "json",
-      success: function (response, status, xhr) {
-        // Handle the response from the server
-        console.log(response); // You can perform actions with the response here
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
-        $("#response").css("color", "green");
-
-        if (isXML) {
-          var person = $(response).find("Person");
-          var id = person.find("Id").text();
-          var name = person.find("Name").text();
-          var email = person.find("Email").text();
-          var age = person.find("Age").text();
-
-          // insert get person values to input fields
-          $("#id").val(id);
-          $("#name").val(name);
-          $("#email").val(email);
-          $("#age").val(age);
-        } else {
-          var person = response;
-          // insert get person values to input fields
-          $("#id").val(person.Id);
-          $("#name").val(person.Name);
-          $("#email").val(person.Email);
-          $("#age").val(person.Age);
-        }
-      },
-      error: function (xhr, status, error) {
-        // Handle errors
-        console.log(error);
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
-        $("#response").css("color", "red");
-      },
-    });
-  }
-  // Add an event listener to the "Search" button
-  $("#search").click(function () {
-    // get id from input
-    var id = $("#id").val();
-
-    getPerson(id);
-  });
-
-  $("#clear").click(function () {
-    // clear input fields
-    $("#response").empty();
-    $("#id").val("");
-    $("#name").val("");
-    $("#email").val("");
-    $("#age").val("");
-  });
-
-  function filterPersons(person) {
-    var endpoint = isXML
-      ? "http://localhost:50985/MyRestService.svc/filter"
-      : "http://localhost:50985/MyRestService.svc/json/filter";
-
-    $.ajax({
-      url: endpoint,
-      type: "POST",
-      data: isXML ? personToXml(person) : JSON.stringify(person),
-      contentType: isXML ? "application/xml" : "application/json",
-      success: function (response, status, xhr) {
-        // Handle the response from the server
-        console.log(response); // You can perform actions with the response here
-        // Clear the table
-        $("#personresult").empty();
-        // Append the table headers
-        $("#personresult").append(
-          "<tr><th>Id</th><th>Name</th><th>Email</th><th>Age</th></tr>"
+      success: function (response, _, xhr) {
+        console.log(`Getting size `, FORMAT, response);
+        const numberOfPeople =
+          FORMAT === FORMATS.XML
+            ? $(response).find("Integer").text()
+            : response;
+        $("#response").text(
+          `Liczba osób: ${numberOfPeople}, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
         );
-
         $("#response").css("color", "green");
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
-
-        if (isXML) {
-          var persons = $(response).find("Person");
-          persons.each(function () {
-            var person = $(this);
-            var id = person.find("Id").text();
-            var name = person.find("Name").text();
-            var email = person.find("Email").text();
-            var age = person.find("Age").text();
-
-            $("#personresult").append(
-              "<tr><td>" +
-                id +
-                "</td><td>" +
-                name +
-                "</td><td>" +
-                email +
-                "</td><td>" +
-                age +
-                "</td></tr>"
-            );
-          });
-        } else {
-          for (var i = 0; i < response.length; i++) {
-            var person = response[i];
-            // add id to the table
-            $("#personresult").append(
-              "<tr><td>" +
-                person.Id +
-                "</td><td>" +
-                person.Name +
-                "</td><td>" +
-                person.Email +
-                "</td><td>" +
-                person.Age +
-                "</td></tr>"
-            );
-          }
-        }
       },
-      error: function (xhr, status, error) {
-        // Handle errors
+      error: function (xhr, _, error) {
         console.log(error);
-
+        $("#response").text(
+          `Nie pobrano liczby osób, ` +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
         $("#response").css("color", "red");
-        $("#response").text(xhr.statusText + " - Status Code: " + xhr.status);
       },
     });
   }
 
-  // add event listener to the "filter"   button
-  $("#filter").click(function () {
-    // get values from input fields
-    var name = $("#name").val();
-    var email = $("#email").val();
-    var age = $("#age").val();
-
-    // if age input is empty do not include Age in the json object
-    if (age == "") {
-      var newPerson = {
-        Name: name,
-        Email: email,
-      };
-    }
-    // else include Age in the json object
-    else {
-      var newPerson = {
-        Name: name,
-        Email: email,
-        Age: age,
-      };
-    }
-
-    //console log the new person object
-    console.log(newPerson);
-
-    // call filterPersons function and pass the new person object
-    filterPersons(newPerson);
-  });
-
-  function personToXml(person) {
+  function stringifyXML(person) {
     console.log(person);
-    var xml =
-      '<Person xmlns="http://schemas.datacontract.org/2004/07/MyWebService">';
-    xml += "<Name>" + person.Name + "</Name>";
-    // xml += "<Id>" + person.Id + "</Id>";
-
-    // if person has no age, set age to 0
-    if (person.Age == null) {
-      xml += "<Age>0</Age>";
-    } else {
-      xml += "<Age>" + person.Age + "</Age>";
-    }
-    xml += "<Email>" + person.Email + "</Email>";
-    xml += "</Person>";
-    console.log(xml);
-    return xml;
+    const personXML = `<Person>
+                          <name>${person.name}</name>
+                          <age>${person.age}</age>
+                          <email>${person.email}</email>    
+                        </Person>`;
+    console.log(personXML);
+    return personXML;
   }
 
-  $("#jsonbutton").click(function () {
-    // when adding get the values from the input fields
+  function parseXML(person) {
+    const id = person.find("id").text();
+    const name = person.find("name").text();
+    const age = person.find("age").text();
+    const email = person.find("email").text();
+    return { id, name, age, email };
+  }
+
+  function clear() {
+    $("#result-table").empty();
+    $("#response").empty();
+    $("#result-table").append(TABLE_HEADERS);
+  }
+
+  function appendPerson({ id, name, age, email }) {
+    $("#result-table").append(
+      `<tr> 
+          <td>${id}</td>
+          <td>${name}</td>
+          <td>${age}</td>
+          <td>${email}</td>
+        </tr>`
+    );
+  }
+
+  $("#format-json").click(function () {
     FORMAT = FORMATS.JSON;
-    document.getElementById("dataformat").innerHTML = "JSON";
+    document.getElementById("format").innerHTML = "Format: JSON";
   });
 
-  $("#xmlbutton").click(function () {
-    // when adding get the values from the input fields
+  $("#format-xml").click(function () {
     FORMAT = FORMATS.XML;
-    document.getElementById("dataformat").innerHTML = "XML";
+    document.getElementById("format").innerHTML = "Format: XML";
   });
 
-  getPersons();
+  $("#get-all").click(function () {
+    clear();
+    getPeople();
+  });
+
+  $("#count-people").click(function () {
+    countPeople();
+  });
+
+  $("#show-person-form-submit").click(function (e) {
+    e.preventDefault();
+    clear();
+    const id = $("#show-person").val();
+    if (id) {
+      getPerson(id);
+    } else {
+      $("#response").text("Nie podano id osoby!");
+      $("#response").css("color", "red");
+    }
+  });
+
+  $("#find-by-name-form-submit").click(function (e) {
+    e.preventDefault();
+    clear();
+    const name = $("#find-name").val();
+    if (name) {
+      getPeopleByName(name);
+    } else {
+      $("#response").text("Nie podano imienia osoby!");
+      $("#response").css("color", "red");
+    }
+  });
+
+  $("#delete-form-submit").click(function (e) {
+    e.preventDefault();
+    clear();
+    const id = $("#delete-id").val();
+    if (id) {
+      deletePerson(id);
+    } else {
+      $("#response").text("Nie podano id osoby!");
+      $("#response").css("color", "red");
+    }
+  });
+
+  $("#add-form-submit").click(function (e) {
+    e.preventDefault();
+    clear();
+
+    const name = $("#add-name").val();
+    const age = $("#add-age").val();
+    const email = $("#add-email").val();
+
+    if (name && age && email) {
+      const person = {
+        name: name,
+        age: age,
+        email: email,
+      };
+      addPerson(person);
+    } else {
+      $("#response").text("Nie podano wszystkich danych!");
+      $("#response").css("color", "red");
+    }
+  });
+
+  $("#update-form-submit").click(function (e) {
+    e.preventDefault();
+    clear();
+    const id = $("#update-id").val();
+    const name = $("#update-name").val();
+    const age = $("#update-age").val();
+    const email = $("#update-email").val();
+
+    if (id && name && age && email) {
+      const person = {
+        name: name,
+        age: age,
+        email: email,
+      };
+      updatePerson(id, person);
+    } else {
+      $("#response").text("Nie podano wszystkich danych!");
+      $("#response").css("color", "red");
+    }
+  });
 });

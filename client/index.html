@@ -18,13 +18,90 @@
     </header>
     <div class="container">
         <aside>
-            <div id="people-api">People Api</div>
-            <div id="format">
+            <div>
+                <div id="people-api">People Api</div>
+                <div id="format">Format: JSON</div>
+            </div>
+            <div class="actions">
+                <button id="get-all">Pokaż wszystkich</button>
+                <button id="count-people">Liczba osób</button>
+            </div>
+            <div>
                 <button id="format-xml">XML</button>
                 <button id="format-json">JSON</button>
             </div>
         </aside>
-        <main>dsa</main>
+        <main>
+            <div id="response"></div>
+            <table id="result-table">
+                <tr>
+                    <th>Id</th>
+                    <th>Imię</th>
+                    <th>Wiek</th>
+                    <th>Email</th>
+                </tr>
+            </table>
+            <form id="show-person-form">
+                <p>Pokaż osobę</p>
+                <div>
+                    <label for="show-person">Id</label>
+                    <input id="show-person" type="number" required>
+                </div>
+                <input id="show-person-form-submit" type="submit" value="Pokaż">
+            </form>
+            <form id="find-by-name-form">
+                <p>Filtruj osoby</p>
+                <div>
+                    <label for="find-name">Imię</label>
+                    <input id="find-name" type="text" required>
+                </div>
+                <input id="find-by-name-form-submit" type="submit" value="Znajdź">
+            </form>
+            <form id="delete-form">
+                <p>Usuń osobę</p>
+                <div>
+                    <label for="delete-id">Id</label>
+                    <input id="delete-id" type="number" required>
+                </div>
+                <input id="delete-form-submit" type="submit" value="Usuń">
+            </form>
+            <form action="add-form">
+                <p>Dodaj osobę</p>
+                <div>
+                    <label for="add-name">Imię</label>
+                    <input id="add-name" type="text" required>
+                </div>
+                <div>
+                    <label for="add-age">Wiek</label>
+                    <input id="add-age" type="number" required>
+                </div>
+                <div>
+                    <label for="add-email">Email</label>
+                    <input id="add-email" type="text" required>
+                </div>
+                <input id="add-form-submit" type="submit" value="Dodaj osobę">
+            </form>
+            <form action="update-form">
+                <p>Edytuj osobę</p>
+                <div>
+                    <label for="update-id">Id</label>
+                    <input id="update-id" type="number" required>
+                </div>
+                <div>
+                    <label for="update-name">Imię</label>
+                    <input id="update-name" type="text" required>
+                </div>
+                <div>
+                    <label for="update-age">Wiek</label>
+                    <input id="update-age" type="number" required>
+                </div>
+                <div>
+                    <label for="update-email">Email</label>
+                    <input id="update-email" type="text" required>
+                </div>
+                <input id="update-form-submit" type="submit" value="Edytuj osobę">
+            </form>
+        </main>
     </div>
 </body>
 
