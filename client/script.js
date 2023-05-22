@@ -50,6 +50,7 @@ $(document).ready(function () {
             " - Status Code: " +
             xhr.status
         );
+        $("#response").css("color", "green");
         let parsedPeople = [];
         if (FORMAT === FORMATS.XML) {
           const people = $(response).find("item");
