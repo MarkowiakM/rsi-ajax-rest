@@ -1,4 +1,4 @@
-const ENDPOINT = "http://localhost:7070/people";
+const ENDPOINT = "http://10.182.53.80:7070/people";
 const FORMATS = {
   JSON: "application/json",
   XML: "text/xml",
@@ -33,7 +33,7 @@ function myInfo() {
   console.log("OS: " + window.navigator.platform);
 }
 
-// myInfo();
+myInfo();
 
 $(document).ready(function () {
   function getPeople() {
@@ -50,7 +50,6 @@ $(document).ready(function () {
             " - Status Code: " +
             xhr.status
         );
-        $("#response").css("color", "green");
         let parsedPeople = [];
         if (FORMAT === FORMATS.XML) {
           const people = $(response).find("item");
@@ -68,6 +67,49 @@ $(document).ready(function () {
         console.log(error);
         $("#response").text(
           "Nie znaleziono osób w bazie, " +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "red");
+      },
+    });
+  }
+
+  function getAuthors() {
+    $.ajax({
+      async: false,
+      url: `${ENDPOINT}/authors`,
+      type: "GET",
+      dataType: FORMAT === FORMATS.XML ? "xml" : "json",
+      success: function (response, _, xhr) {
+        console.log("getting people", FORMAT, response);
+        $("#response").text(
+          "Znaleziono autorów, " +
+            xhr.statusText +
+            " - Status Code: " +
+            xhr.status
+        );
+        $("#response").css("color", "green");
+        let parsedPeople = [];
+        if (FORMAT === FORMATS.XML) {
+          const people = $(response).find("item");
+          people.each(function () {
+            parsedPeople.push(parseXML($(this)));
+          });
+        } else {
+          parsedPeople = response;
+        }
+        parsedPeople.forEach(({ _, name }) => {
+          $("#authors").append(`
+            <div>${name}</div> 
+          `);
+        });
+      },
+      error: (xhr, _, error) => {
+        console.log(error);
+        $("#response").text(
+          "Nie znaleziono autorów, " +
             xhr.statusText +
             " - Status Code: " +
             xhr.status
@@ -142,9 +184,9 @@ $(document).ready(function () {
         appendPerson(parsedPerson);
       },
       error: function (xhr, status, error) {
-        console.log(error);
+        var err = eval("(" + xhr.responseText + ")");
         $("#response").text(
-          `Nie znaleziono osoby o id: ${id}` +
+          `Nie znaleziono osoby o id: ${id}, ` +
             xhr.statusText +
             " - Status Code: " +
             xhr.status
@@ -299,6 +341,7 @@ $(document).ready(function () {
 
   function clear() {
     $("#result-table").empty();
+    $("#authors").empty();
     $("#response").empty();
     $("#result-table").append(TABLE_HEADERS);
   }
@@ -338,8 +381,15 @@ $(document).ready(function () {
   });
 
   $("#count-people").click(function () {
+    clear();
     scrollToTop();
     countPeople();
+  });
+
+  $("#get-authors").click(function () {
+    clear();
+    scrollToTop();
+    getAuthors();
   });
 
   $("#show-person-form-submit").click(function (e) {
@@ -353,6 +403,7 @@ $(document).ready(function () {
       $("#response").text("Nie podano id osoby!");
       $("#response").css("color", "red");
     }
+    document.getElementById("show-person-form").reset();
   });
 
   $("#find-by-name-form-submit").click(function (e) {
@@ -366,6 +417,7 @@ $(document).ready(function () {
       $("#response").text("Nie podano imienia osoby!");
       $("#response").css("color", "red");
     }
+    document.getElementById("find-by-name-form").reset();
   });
 
   $("#delete-form-submit").click(function (e) {
@@ -379,6 +431,7 @@ $(document).ready(function () {
       $("#response").text("Nie podano id osoby!");
       $("#response").css("color", "red");
     }
+    document.getElementById("delete-form").reset();
   });
 
   $("#add-form-submit").click(function (e) {
@@ -401,6 +454,7 @@ $(document).ready(function () {
       $("#response").text("Nie podano wszystkich danych!");
       $("#response").css("color", "red");
     }
+    document.getElementById("add-form").reset();
   });
 
   $("#update-form-submit").click(function (e) {
@@ -424,5 +478,6 @@ $(document).ready(function () {
       $("#response").text("Nie podano wszystkich danych!");
       $("#response").css("color", "red");
     }
+    document.getElementById("update-form").reset();
   });
 });

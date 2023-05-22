@@ -123,7 +123,7 @@ label {
   width: 50px;
 }
 
-#response {
+#response, #authors {
   font-size: 1.2em;
   background-color: #fff;
   margin-bottom: 20px;

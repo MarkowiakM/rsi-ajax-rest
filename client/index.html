@@ -25,6 +25,7 @@
             <div class="actions">
                 <button id="get-all">Pokaż wszystkich</button>
                 <button id="count-people">Liczba osób</button>
+                <button id="get-authors">Autorzy</button>
             </div>
             <div>
                 <button id="format-xml">XML</button>
@@ -33,6 +34,7 @@
         </aside>
         <main>
             <div id="response"></div>
+            <div id="authors"></div>
             <table id="result-table">
                 <tr>
                     <th>Id</th>
@@ -65,7 +67,7 @@
                 </div>
                 <input id="delete-form-submit" type="submit" value="Usuń">
             </form>
-            <form action="add-form">
+            <form id="add-form">
                 <p>Dodaj osobę</p>
                 <div>
                     <label for="add-name">Imię</label>
@@ -81,7 +83,7 @@
                 </div>
                 <input id="add-form-submit" type="submit" value="Dodaj osobę">
             </form>
-            <form action="update-form">
+            <form id="update-form">
                 <p>Edytuj osobę</p>
                 <div>
                     <label for="update-id">Id</label>
